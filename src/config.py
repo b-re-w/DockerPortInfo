@@ -47,5 +47,9 @@ class Settings:
         base = "/" + raw_base.strip().strip("/")
         self.base_path: str = "" if base == "/" else base
 
+        # Comma-separated CIDR(s) allowed to see port details (campus network).
+        # Clients outside these ranges get the page but with ports hidden.
+        self.campus_cidrs: str = get("DOCKERPORTINFO_CAMPUS_CIDRS", "168.188.0.0/16")
+
 
 settings = Settings()

@@ -93,6 +93,9 @@ function ports(list) {
 }
 
 function card(c) {
+  const portsBody = c.ports_hidden
+    ? `<div class="no-ports locked">🔒 포트 정보 비공개 (학외 IP)</div>`
+    : ports(c.ports);
   return `<div class="card">
     <div class="card-name">${esc(c.names)}</div>
     <div class="card-meta">
@@ -101,7 +104,7 @@ function card(c) {
     </div>
     <div class="chips">${chips(c.image)}</div>
     <div class="ports-label">포트 · 컨테이너 → 호스트</div>
-    ${ports(c.ports)}
+    ${portsBody}
   </div>`;
 }
 
@@ -159,10 +162,11 @@ async function load() {
     const data = await res.json();
     const servers = data.servers || [];
     const root = document.getElementById("servers");
+    const banner = data.notice ? `<div class="notice">🔒 ${esc(data.notice)}</div>` : "";
     if (servers.length === 0) {
-      root.innerHTML = `<div class="placeholder">아직 수신된 서버 데이터가 없습니다.<br>크론탭(send_docker_ps.sh)이 동작 중인지 확인하세요.</div>`;
+      root.innerHTML = banner + `<div class="placeholder">아직 수신된 서버 데이터가 없습니다.<br>크론탭(send_docker_ps.sh)이 동작 중인지 확인하세요.</div>`;
     } else {
-      root.innerHTML = servers.map(serverPanel).join("");
+      root.innerHTML = banner + servers.map(serverPanel).join("");
     }
     setLive(true, `갱신 ${new Date().toLocaleTimeString("ko-KR", { hour12: false })}`);
   } catch (err) {

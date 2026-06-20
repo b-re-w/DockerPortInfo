@@ -123,17 +123,31 @@ chmod +x scripts/*.sh
 log "logs/, data/ 준비 및 스크립트 실행권한 부여"
 
 # ---------- log rotation (daily, keep 7) ----------
+# run a command as root (direct if root, else via sudo)
+as_root() {
+  if [[ "$(id -u)" -eq 0 ]]; then "$@"; elif have sudo; then sudo "$@"; else return 1; fi
+}
+
 install_logrotate() {
   [[ -f deploy/logrotate.example ]] || { warn "deploy/logrotate.example 없음 — logrotate 건너뜀"; return 0; }
-  have logrotate || { warn "logrotate 미설치 — 'sudo apt install logrotate' 후 재실행 권장 (로그 무한 누적)"; return 0; }
+
+  # logrotate 가 없으면 apt 로 설치 시도
+  if ! have logrotate; then
+    if have apt-get && { [[ "$(id -u)" -eq 0 ]] || have sudo; }; then
+      log "logrotate 미설치 → apt 로 설치 시도"
+      as_root apt-get update -qq && as_root apt-get install -y logrotate
+    fi
+  fi
+  have logrotate || { warn "logrotate 설치 실패 — 'sudo apt install logrotate' 수동 설치 필요 (로그 무한 누적 주의)"; return 0; }
+
   local target="/etc/logrotate.d/dockerportinfo"
   local content; content="$(sed "s#__PROJECT_ROOT__#${PROJECT_ROOT}#g" deploy/logrotate.example)"
   if [[ "$(id -u)" -eq 0 ]]; then
     printf '%s\n' "$content" > "$target"
-  elif have sudo && sudo -n true 2>/dev/null; then
+  elif have sudo; then
     printf '%s\n' "$content" | sudo tee "$target" >/dev/null
   else
-    warn "logrotate 자동 설치 권한 없음. 수동 설치:"
+    warn "logrotate 설정 설치 권한 없음. 수동 설치:"
     warn "  sed 's#__PROJECT_ROOT__#${PROJECT_ROOT}#g' deploy/logrotate.example | sudo tee ${target}"
     return 0
   fi

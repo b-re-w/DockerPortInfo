@@ -15,6 +15,7 @@ Endpoints (BASE = base_path, e.g. /info/docker)
 from __future__ import annotations
 
 import hmac
+import ipaddress
 from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException, Request
@@ -31,6 +32,52 @@ _RES_DIR = _PROJECT_ROOT / "res"
 _INDEX_FILE = _RES_DIR / "index.html"
 
 BASE = settings.base_path  # "" or "/info/docker"
+
+# Campus networks allowed to see port details.
+_CAMPUS_NETS = []
+for _cidr in settings.campus_cidrs.split(","):
+    _cidr = _cidr.strip()
+    if not _cidr:
+        continue
+    try:
+        _CAMPUS_NETS.append(ipaddress.ip_network(_cidr, strict=False))
+    except ValueError:
+        pass
+
+
+def _client_ip(request: Request) -> str:
+    """Real client IP, honoring the X-Real-IP / X-Forwarded-For set by nginx."""
+    real = request.headers.get("x-real-ip")
+    if real:
+        return real.strip()
+    fwd = request.headers.get("x-forwarded-for")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    return request.client.host if request.client else ""
+
+
+def _is_campus(ip: str) -> bool:
+    try:
+        addr = ipaddress.ip_address(ip)
+    except ValueError:
+        return False
+    return any(addr in net for net in _CAMPUS_NETS)
+
+
+def _public_snapshot(snap: ServerSnapshot, campus: bool) -> dict:
+    """Serialize a snapshot; hide per-container port info for non-campus clients."""
+    data = snap.model_dump(mode="json")
+    if not campus:
+        for container in data.get("containers", []):
+            container["ports"] = []
+            container["raw_ports"] = ""
+            container["ports_hidden"] = True
+    return data
+
+
+def _notice(ip: str) -> str:
+    return f"당신의 접속 IP는 {ip}입니다. 학외 IP의 경우 포트 정보가 비공개됩니다."
+
 
 app = FastAPI(title="DockerPortInfo", version="0.1.0")
 
@@ -52,8 +99,17 @@ def healthz() -> dict[str, str]:
 
 # Declared before /{server_name} so it is not captured as a server name.
 @app.get(f"{BASE}/snapshots")
-def get_all() -> dict[str, list[ServerSnapshot]]:
-    return {"servers": store.all()}
+def get_all(request: Request) -> JSONResponse:
+    ip = _client_ip(request)
+    campus = _is_campus(ip)
+    return JSONResponse(
+        {
+            "client_ip": ip,
+            "restricted": not campus,
+            "notice": None if campus else _notice(ip),
+            "servers": [_public_snapshot(s, campus) for s in store.all()],
+        }
+    )
 
 
 @app.post(f"{BASE}/{{server_name}}")
@@ -84,12 +140,18 @@ async def ingest(
     )
 
 
-@app.get(f"{BASE}/{{server_name}}", response_model=ServerSnapshot)
-def get_server(server_name: str) -> ServerSnapshot | JSONResponse:
+@app.get(f"{BASE}/{{server_name}}")
+def get_server(server_name: str, request: Request) -> JSONResponse:
     snapshot = store.get(server_name)
     if snapshot is None:
         return JSONResponse({"error": "not found", "server_name": server_name}, status_code=404)
-    return snapshot
+    ip = _client_ip(request)
+    campus = _is_campus(ip)
+    data = _public_snapshot(snapshot, campus)
+    data["client_ip"] = ip
+    data["restricted"] = not campus
+    data["notice"] = None if campus else _notice(ip)
+    return JSONResponse(data)
 
 
 if BASE:

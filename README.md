@@ -67,6 +67,13 @@ DockerPortInfo/
 `location /info/docker/` 블록을 추가하면 `https://dolab-gpu.duckdns.org/info/docker/` 로 노출됩니다.
 `proxy_pass http://127.0.0.1:13000;` 에 **trailing slash/경로를 붙이지 않아** 원본 URI가 그대로 전달되는 것이 핵심입니다.
 
+### 접속 IP에 따른 포트 비공개
+
+`DOCKERPORTINFO_CAMPUS_CIDRS`(기본 `168.188.0.0/16`) 대역 **밖**에서 접속하면 페이지는 그대로 보이되,
+각 컨테이너의 **포트 정보만 비공개** 처리되고 `"당신의 접속 IP는 …입니다. 학외 IP의 경우 포트 정보가 비공개됩니다."`
+배너가 표시됩니다. 클라이언트 IP는 nginx가 넣는 `X-Real-IP`/`X-Forwarded-For`로 판별합니다.
+(이미지 정보·서버 구성은 학외에서도 보입니다. 콤마로 여러 대역 지정 가능.)
+
 ---
 
 ## 빠른 설치 (setup.sh, 권장)
