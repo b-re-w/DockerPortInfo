@@ -11,7 +11,7 @@
 #   --psk KEY        pre-shared key (must be identical on primary & secondary)
 #   --web-url URL    web server base URL the sender posts to
 #                    (primary default: http://127.0.0.1:<port>)
-#   --port PORT      web server port (primary, default 8000)
+#   --port PORT      web server port (primary, default 13000)
 #   --host HOST      web server bind host (primary, default 0.0.0.0)
 #   --no-cron        do not touch crontab
 #   --no-start       (primary) do not start the server / send a test sample
@@ -19,7 +19,7 @@
 # Examples:
 #   ./scripts/setup.sh primary
 #   ./scripts/setup.sh primary --psk "$(openssl rand -hex 24)"
-#   ./scripts/setup.sh secondary --psk <same-key> --web-url http://168.188.127.233:8000
+#   ./scripts/setup.sh secondary --psk <same-key> --web-url http://168.188.127.233:13000
 # ------------------------------------------------------------------
 set -uo pipefail
 
@@ -28,7 +28,7 @@ cd "${PROJECT_ROOT}"
 
 # ---------- args ----------
 ROLE="${1:-}"; shift || true
-PSK_ARG=""; WEB_URL_ARG=""; PORT="8000"; HOST="0.0.0.0"
+PSK_ARG=""; WEB_URL_ARG=""; PORT="13000"; HOST="0.0.0.0"
 DO_CRON=1; DO_START=1
 
 while [[ $# -gt 0 ]]; do
@@ -105,7 +105,7 @@ if [[ -n "$WEB_URL_ARG" ]]; then
 elif [[ "$ROLE" == "primary" ]]; then
   set_env_var DOCKERPORTINFO_WEB_URL "http://127.0.0.1:${PORT}" .env
 elif [[ -z "$(get_env_var DOCKERPORTINFO_WEB_URL .env)" ]]; then
-  warn "secondary 의 DOCKERPORTINFO_WEB_URL 이 비어 있습니다. --web-url http://<primary-ip>:8000 으로 지정하세요."
+  warn "secondary 의 DOCKERPORTINFO_WEB_URL 이 비어 있습니다. --web-url http://<primary-ip>:13000 으로 지정하세요."
 fi
 if [[ "$ROLE" == "primary" ]]; then
   set_env_var DOCKERPORTINFO_HOST "$HOST" .env

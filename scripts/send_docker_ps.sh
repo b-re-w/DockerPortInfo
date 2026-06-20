@@ -12,7 +12,7 @@
 # Precedence: real environment variables > .env > .env.default.
 #
 #   DOCKERPORTINFO_SERVER_NAME : this server's name (e.g. primary, secondary)
-#   DOCKERPORTINFO_WEB_URL     : web server base URL (e.g. http://168.188.127.233:8000)
+#   DOCKERPORTINFO_WEB_URL     : web server base URL (e.g. http://168.188.127.233:13000)
 #   DOCKERPORTINFO_PSK         : pre-shared key sent as the X-API-Key header
 #
 # Example crontab entry (secondary server)
@@ -45,7 +45,7 @@ load_env "${PROJECT_ROOT}/.env"
 load_env "${PROJECT_ROOT}/.env.default"
 
 SERVER_NAME="${1:-${DOCKERPORTINFO_SERVER_NAME:-primary}}"
-WEB_URL="${DOCKERPORTINFO_WEB_URL:-http://127.0.0.1:8000}"
+WEB_URL="${DOCKERPORTINFO_WEB_URL:-http://127.0.0.1:13000}"
 WEB_URL="${WEB_URL%/}" # strip trailing slash
 PSK="${DOCKERPORTINFO_PSK:-}"
 

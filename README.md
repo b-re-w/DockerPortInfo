@@ -67,7 +67,7 @@ chmod +x scripts/setup.sh
 ./scripts/setup.sh primary
 
 # secondary (전송만). primary 가 출력한 PSK 와 IP 를 그대로 사용
-./scripts/setup.sh secondary --psk <primary-PSK> --web-url http://<primary-ip>:8000
+./scripts/setup.sh secondary --psk <primary-PSK> --web-url http://<primary-ip>:13000
 ```
 
 `setup.sh`가 하는 일:
@@ -115,7 +115,7 @@ uv sync
 
 # 수동 실행 (개발/확인용)
 ./scripts/launch_server.sh
-# → http://<primary-ip>:8000 접속
+# → http://<primary-ip>:13000 접속
 ```
 
 `launch_server.sh`는 이미 떠 있으면 아무 것도 하지 않고, 죽어 있으면 다시 띄웁니다.
@@ -155,14 +155,14 @@ chmod +x scripts/send_docker_ps.sh scripts/launch_server.sh
 ```bash
 # secondary 의 .env 예시
 DOCKERPORTINFO_PSK=<primary와 동일한 키>
-DOCKERPORTINFO_WEB_URL=http://<primary-ip>:8000
+DOCKERPORTINFO_WEB_URL=http://<primary-ip>:13000
 ```
 
 ```cron
 * * * * * /opt/DockerPortInfo/scripts/send_docker_ps.sh secondary >> /tmp/dpi-sender.log 2>&1
 ```
 
-> secondary에서 전송이 되려면 primary의 방화벽에서 해당 포트(기본 8000)가 secondary로 열려 있어야 합니다.
+> secondary에서 전송이 되려면 primary의 방화벽에서 해당 포트(기본 13000)가 secondary로 열려 있어야 합니다.
 
 ---
 
@@ -170,17 +170,17 @@ DOCKERPORTINFO_WEB_URL=http://<primary-ip>:8000
 
 ```bash
 # 헬스 체크
-curl http://127.0.0.1:8000/healthz
+curl http://127.0.0.1:13000/healthz
 
 # 전송 한 번 수동 실행 (.env 의 PSK·WEB_URL 사용, 서버 이름은 인자로)
 ./scripts/send_docker_ps.sh primary
 
 # 키 없이 POST 하면 401 인지 확인
-curl -s -o /dev/null -w "%{http_code}\n" -X POST http://127.0.0.1:8000/docker/primary/ --data "x"
+curl -s -o /dev/null -w "%{http_code}\n" -X POST http://127.0.0.1:13000/docker/primary/ --data "x"
 
 # 저장된 스냅샷 조회
-curl http://127.0.0.1:8000/docker/primary/
-curl http://127.0.0.1:8000/api/snapshots
+curl http://127.0.0.1:13000/docker/primary/
+curl http://127.0.0.1:13000/api/snapshots
 ```
 
 자세한 설계 배경은 [PROJECT.md](PROJECT.md) 참고.

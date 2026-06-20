@@ -28,7 +28,11 @@
       "Bash(PYTHONPATH=. uv run uvicorn src.app:app --host 127.0.0.1 --port 8086)",
       "Bash(curl -s http://127.0.0.1:8086/healthz)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -X POST http://127.0.0.1:8086/docker/primary/ -H \"Content-Type: text/plain\" --data-binary @samples/docker_ps_primary.txt)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -X POST http://127.0.0.1:8086/docker/primary/ -H \"X-API-Key: change-me-please\" -H \"Content-Type: text/plain\" --data-binary @samples/docker_ps_primary.txt)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -X POST http://127.0.0.1:8086/docker/primary/ -H \"X-API-Key: change-me-please\" -H \"Content-Type: text/plain\" --data-binary @samples/docker_ps_primary.txt)",
+      "Bash(DOCKERPORTINFO_PORT=13000 PYTHONPATH=. uv run uvicorn src.app:app --host 127.0.0.1 --port 13000)",
+      "Bash(curl -s http://127.0.0.1:13000/healthz)",
+      "Bash(curl -s -o /dev/null -w \"healthz: %{http_code}\\\\n\" http://127.0.0.1:13000/healthz)",
+      "Bash(rm -f /tmp/srv.log data/*.json)"
     ],
     "additionalDirectories": [
       "\\tmp",
