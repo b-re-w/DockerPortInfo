@@ -204,4 +204,29 @@ curl http://127.0.0.1:13000/info/docker/snapshots
 curl https://dolab-gpu.duckdns.org/info/docker/snapshots
 ```
 
+---
+
+## 로그 관리 (회전)
+
+로그는 프로젝트 루트의 `logs/`에 쌓입니다.
+
+- `server.log` — uvicorn 출력(요청·에러). 가장 빠르게 증가.
+- `sender.log` — 전송 스크립트가 매분 1줄.
+- `launch.log` — 재기동 시에만 기록.
+
+`setup.sh`가 [deploy/logrotate.example](deploy/logrotate.example)를 `/etc/logrotate.d/dockerportinfo`로
+자동 설치합니다(`logrotate` + sudo 권한 필요). **매일 회전 + 7일 보관 후 자동 삭제**라 무한 누적되지 않습니다.
+
+수동 설치/확인:
+
+```bash
+sed "s#__PROJECT_ROOT__#$(pwd)#g" deploy/logrotate.example | sudo tee /etc/logrotate.d/dockerportinfo
+sudo logrotate --debug /etc/logrotate.d/dockerportinfo   # 설정 검증 (실제 회전 안 함)
+sudo logrotate --force /etc/logrotate.d/dockerportinfo   # 즉시 한 번 회전 테스트
+```
+
+> `copytruncate`를 쓰므로 서버를 재시작하지 않고도 회전됩니다.
+
+---
+
 자세한 설계 배경은 [PROJECT.md](PROJECT.md) 참고.

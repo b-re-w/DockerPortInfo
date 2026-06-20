@@ -1,0 +1,17 @@
+# DockerPortInfo 로그 회전 설정
+# 설치 위치: /etc/logrotate.d/dockerportinfo
+# (setup.sh 가 __PROJECT_ROOT__ 를 실제 경로로 바꿔 자동 설치합니다.)
+#
+# 동작: 하루 단위로 로그를 분리(dateext)하고 7일(=1주일) 보관 후 삭제.
+# 시스템의 /etc/cron.daily/logrotate 가 매일 실행하므로 별도 cron 불필요.
+
+__PROJECT_ROOT__/logs/*.log {
+    daily              # 하루 단위로 회전
+    rotate 7           # 7개(=약 1주일) 보관, 그 이전 것은 삭제
+    dateext            # 회전 파일명에 날짜 (server.log-20260620)
+    missingok          # 로그 파일이 없어도 에러 아님
+    notifempty         # 비어 있으면 회전 안 함
+    compress           # 오래된 회전 파일 gzip 압축
+    delaycompress      # 직전 파일은 압축 미루어 tail 하기 쉽게
+    copytruncate       # 파일을 복사 후 비움 → 서버 재시작 없이 계속 기록
+}

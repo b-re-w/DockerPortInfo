@@ -122,6 +122,25 @@ mkdir -p logs data
 chmod +x scripts/*.sh
 log "logs/, data/ 준비 및 스크립트 실행권한 부여"
 
+# ---------- log rotation (daily, keep 7) ----------
+install_logrotate() {
+  [[ -f deploy/logrotate.example ]] || { warn "deploy/logrotate.example 없음 — logrotate 건너뜀"; return 0; }
+  have logrotate || { warn "logrotate 미설치 — 'sudo apt install logrotate' 후 재실행 권장 (로그 무한 누적)"; return 0; }
+  local target="/etc/logrotate.d/dockerportinfo"
+  local content; content="$(sed "s#__PROJECT_ROOT__#${PROJECT_ROOT}#g" deploy/logrotate.example)"
+  if [[ "$(id -u)" -eq 0 ]]; then
+    printf '%s\n' "$content" > "$target"
+  elif have sudo && sudo -n true 2>/dev/null; then
+    printf '%s\n' "$content" | sudo tee "$target" >/dev/null
+  else
+    warn "logrotate 자동 설치 권한 없음. 수동 설치:"
+    warn "  sed 's#__PROJECT_ROOT__#${PROJECT_ROOT}#g' deploy/logrotate.example | sudo tee ${target}"
+    return 0
+  fi
+  log "logrotate 설치: ${target} (매일 회전, 7일 보관)"
+}
+install_logrotate
+
 # ---------- deps (primary only) ----------
 if [[ "$ROLE" == "primary" ]]; then
   if have uv; then
