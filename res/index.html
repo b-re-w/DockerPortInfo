@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DockerPortInfo · GPU 서버 포트 모니터</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" as="style" crossorigin
+        href="https://cdn.jsdelivr.net/gh/sun-typeface/SUITE@2/fonts/variable/woff2/SUITEVariable.css" />
+  <link rel="stylesheet" href="/static/style.css" />
+  <script>
+    // Apply theme before paint to avoid a flash (auto = dark 19:00-07:00)
+    (function () {
+      try {
+        var m = localStorage.getItem("dpi-theme-mode") || "auto";
+        var t = m;
+        if (m === "auto") {
+          var h = new Date().getHours();
+          t = (h >= 19 || h < 7) ? "dark" : "light";
+        }
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">◧</span>
+      <div class="brand-text">
+        <h1>DockerPortInfo</h1>
+        <p>GPU 서버 컨테이너 포트 모니터</p>
+      </div>
+    </div>
+    <div class="status">
+      <div class="live" id="live">
+        <span class="dot"></span>
+        <span id="live-text">연결 중…</span>
+      </div>
+      <div class="countdown" title="다음 자동 갱신까지">
+        <svg viewBox="0 0 36 36" class="ring">
+          <circle class="ring-bg" cx="18" cy="18" r="15.5"></circle>
+          <circle class="ring-fg" id="ring-fg" cx="18" cy="18" r="15.5"></circle>
+        </svg>
+        <span id="countdown-num">60</span>
+      </div>
+      <button id="theme-btn" class="icon-btn" type="button" title="테마 전환">🌗</button>
+      <button id="refresh-btn" class="icon-btn" type="button" title="지금 새로고침">↻</button>
+    </div>
+  </header>
+
+  <main id="servers" class="servers">
+    <div class="placeholder">데이터를 불러오는 중입니다…</div>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
