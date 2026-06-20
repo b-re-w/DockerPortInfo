@@ -40,12 +40,24 @@ HOST="${DOCKERPORTINFO_HOST:-0.0.0.0}"
 PORT="${DOCKERPORTINFO_PORT:-13000}"
 LOG_DIR="${PROJECT_ROOT}/logs"
 LOG_FILE="${LOG_DIR}/server.log"
-APP_MARKER="src.app:app"
 
 mkdir -p "${LOG_DIR}"
 
-# Exit if already running (prevent duplicate launches)
-if pgrep -f "uvicorn.*${APP_MARKER}" >/dev/null 2>&1; then
+# Is anything already listening on our port? (identify by port, not process name)
+port_in_use() {
+  if command -v ss >/dev/null 2>&1; then
+    [[ -n "$(ss -ltnH "sport = :$1" 2>/dev/null)" ]]
+  elif command -v fuser >/dev/null 2>&1; then
+    fuser "$1/tcp" >/dev/null 2>&1
+  elif command -v lsof >/dev/null 2>&1; then
+    lsof -ti "tcp:$1" >/dev/null 2>&1
+  else
+    return 1
+  fi
+}
+
+# Exit if our port is already served (prevent duplicate launches)
+if port_in_use "${PORT}"; then
   exit 0
 fi
 
