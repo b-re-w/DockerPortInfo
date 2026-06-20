@@ -40,6 +40,7 @@ HOST="${DOCKERPORTINFO_HOST:-0.0.0.0}"
 PORT="${DOCKERPORTINFO_PORT:-13000}"
 LOG_DIR="${PROJECT_ROOT}/logs"
 LOG_FILE="${LOG_DIR}/server.log"
+APP_MARKER="src.app:app"
 
 mkdir -p "${LOG_DIR}"
 
