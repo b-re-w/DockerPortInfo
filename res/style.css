@@ -167,8 +167,6 @@ body {
   justify-content: start;
   gap: 22px;
   padding: 26px;
-  max-width: 1500px;
-  margin: 0 auto;
 }
 
 .placeholder {
