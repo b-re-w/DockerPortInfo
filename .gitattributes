@@ -1,0 +1,9 @@
+# 셸 스크립트와 설정 파일은 항상 LF 로 (Windows에서 편집해도 CRLF 방지).
+# CRLF 가 섞이면 Linux 에서 'bad interpreter: ...^M' 로 실행이 깨집니다.
+*       text=auto
+*.sh    text eol=lf
+*.py    text eol=lf
+*.js    text eol=lf
+*.css   text eol=lf
+deploy/logrotate.example text eol=lf
+.env.default             text eol=lf
