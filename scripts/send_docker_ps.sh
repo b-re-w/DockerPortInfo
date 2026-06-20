@@ -22,6 +22,9 @@
 # ------------------------------------------------------------------
 set -uo pipefail
 
+# cron has a minimal PATH; make sure docker / curl / uv are reachable.
+export PATH="${HOME}/.local/bin:${HOME}/.cargo/bin:/usr/local/bin:/usr/bin:/bin:${PATH}"
+
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Load KEY=VALUE pairs from an env file WITHOUT overriding already-set variables.

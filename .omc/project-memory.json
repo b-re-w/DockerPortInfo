@@ -53,8 +53,8 @@
     },
     {
       "path": "README.md",
-      "accessCount": 8,
-      "lastAccessed": 1781926799933,
+      "accessCount": 9,
+      "lastAccessed": 1781927309901,
       "type": "file"
     },
     {
@@ -76,6 +76,18 @@
       "type": "file"
     },
     {
+      "path": "scripts\\send_docker_ps.sh",
+      "accessCount": 4,
+      "lastAccessed": 1781927191966,
+      "type": "file"
+    },
+    {
+      "path": "scripts\\launch_server.sh",
+      "accessCount": 4,
+      "lastAccessed": 1781927198080,
+      "type": "file"
+    },
+    {
       "path": "src\\store.py",
       "accessCount": 3,
       "lastAccessed": 1781922654148,
@@ -85,18 +97,6 @@
       "path": "src\\models.py",
       "accessCount": 3,
       "lastAccessed": 1781924687512,
-      "type": "file"
-    },
-    {
-      "path": "scripts\\send_docker_ps.sh",
-      "accessCount": 3,
-      "lastAccessed": 1781926691920,
-      "type": "file"
-    },
-    {
-      "path": "scripts\\launch_server.sh",
-      "accessCount": 3,
-      "lastAccessed": 1781926703519,
       "type": "file"
     },
     {
@@ -157,6 +157,12 @@
       "path": ".env",
       "accessCount": 1,
       "lastAccessed": 1781926662263,
+      "type": "file"
+    },
+    {
+      "path": "scripts\\setup.sh",
+      "accessCount": 1,
+      "lastAccessed": 1781927234972,
       "type": "file"
     }
   ],

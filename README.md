@@ -56,6 +56,32 @@ DockerPortInfo/
 
 ---
 
+## 빠른 설치 (setup.sh, 권장)
+
+각 서버에서 한 줄로 의존성 설치·`.env` 구성·crontab 등록까지 끝냅니다. **멱등**이라 재실행해도 안전합니다.
+
+```bash
+chmod +x scripts/setup.sh
+
+# primary (웹 서버 + 자기 전송). PSK 미지정 시 자동 생성되어 출력됩니다.
+./scripts/setup.sh primary
+
+# secondary (전송만). primary 가 출력한 PSK 와 IP 를 그대로 사용
+./scripts/setup.sh secondary --psk <primary-PSK> --web-url http://<primary-ip>:8000
+```
+
+`setup.sh`가 하는 일:
+- `.env` 생성/갱신 (PSK·WEB_URL·HOST·PORT). primary는 PSK 자동 생성 후 화면에 출력.
+- primary 만 의존성 설치(`uv sync`, 없으면 `venv`+`pip`). secondary는 설치 불필요.
+- `logs/`·`data/` 생성, 스크립트 실행권한 부여.
+- crontab 1분 주기 등록(primary: 웹 keepalive + 전송 / secondary: 전송).
+- primary는 서버 기동 + 초기 전송까지 시도.
+
+> 옵션: `--port`, `--host`, `--no-cron`, `--no-start`. 자세한 건 `scripts/setup.sh` 상단 주석 참고.
+> 아래 "설정(.env)/수동 등록"은 내부 동작을 이해하거나 수동으로 할 때 참고용입니다.
+
+---
+
 ## 설정 (.env)
 
 설정은 프로젝트 루트의 `.env` 파일에서 읽으며, 없는 값은 커밋된 템플릿 `.env.default`로 보완됩니다.

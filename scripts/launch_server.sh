@@ -13,6 +13,9 @@
 # ------------------------------------------------------------------
 set -uo pipefail
 
+# cron has a minimal PATH; make sure uv / python / docker are reachable.
+export PATH="${HOME}/.local/bin:${HOME}/.cargo/bin:/usr/local/bin:/usr/bin:/bin:${PATH}"
+
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${PROJECT_ROOT}"
 
