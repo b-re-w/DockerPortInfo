@@ -13,3 +13,5 @@ data/
 !.env.default
 .idea/
 .vscode/
+.claude/
+.omc/

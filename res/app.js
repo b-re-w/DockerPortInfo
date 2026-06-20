@@ -1,5 +1,6 @@
 "use strict";
 
+const BASE = (typeof window !== "undefined" && window.DPI_BASE) || ""; // URL prefix
 const THEME_KEY = "dpi-theme-mode"; // "auto" | "light" | "dark"
 const REFRESH_SEC = 60; // auto-refresh interval (seconds)
 const STALE_MS = 3 * 60 * 1000; // mark stale if a server hasn't reported for over 3 minutes
@@ -153,7 +154,7 @@ function toast(html) {
 
 async function load() {
   try {
-    const res = await fetch("/api/snapshots", { cache: "no-store" });
+    const res = await fetch(`${BASE}/snapshots`, { cache: "no-store" });
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
     const servers = data.servers || [];

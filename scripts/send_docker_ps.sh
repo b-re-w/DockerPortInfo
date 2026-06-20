@@ -47,7 +47,11 @@ load_env "${PROJECT_ROOT}/.env.default"
 SERVER_NAME="${1:-${DOCKERPORTINFO_SERVER_NAME:-primary}}"
 WEB_URL="${DOCKERPORTINFO_WEB_URL:-http://127.0.0.1:13000}"
 WEB_URL="${WEB_URL%/}" # strip trailing slash
+BASE_PATH="${DOCKERPORTINFO_BASE_PATH:-/info/docker}"
+BASE_PATH="${BASE_PATH%/}" # strip trailing slash
 PSK="${DOCKERPORTINFO_PSK:-}"
+
+TARGET="${WEB_URL}${BASE_PATH}/${SERVER_NAME}"
 
 # Default (fixed-width) docker ps output - the server parser expects this format.
 OUTPUT="$(docker ps 2>&1)"
@@ -57,15 +61,15 @@ if [[ $? -ne 0 ]]; then
 fi
 
 HTTP_CODE="$(curl -s -o /dev/null -w '%{http_code}' \
-  -X POST "${WEB_URL}/docker/${SERVER_NAME}/" \
+  -X POST "${TARGET}" \
   -H "Content-Type: text/plain; charset=utf-8" \
   -H "X-API-Key: ${PSK}" \
   --data-binary "${OUTPUT}" \
   --max-time 15)"
 
 if [[ "${HTTP_CODE}" == "200" ]]; then
-  echo "[$(date '+%F %T')] ${SERVER_NAME} -> ${WEB_URL} sent ok (200)"
+  echo "[$(date '+%F %T')] ${SERVER_NAME} -> ${TARGET} sent ok (200)"
 else
-  echo "[$(date '+%F %T')] ${SERVER_NAME} -> ${WEB_URL} send failed (HTTP ${HTTP_CODE})" >&2
+  echo "[$(date '+%F %T')] ${SERVER_NAME} -> ${TARGET} send failed (HTTP ${HTTP_CODE})" >&2
   exit 1
 fi

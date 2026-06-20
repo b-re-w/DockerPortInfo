@@ -41,5 +41,11 @@ class Settings:
         # Empty value => authentication disabled (development only).
         self.psk: str = get("DOCKERPORTINFO_PSK", "")
 
+        # Common URL prefix for every route (must match the nginx location).
+        # Normalized to a single leading slash and no trailing slash; "" = root.
+        raw_base = get("DOCKERPORTINFO_BASE_PATH", "/info/docker")
+        base = "/" + raw_base.strip().strip("/")
+        self.base_path: str = "" if base == "/" else base
+
 
 settings = Settings()

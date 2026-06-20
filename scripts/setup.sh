@@ -28,20 +28,23 @@ cd "${PROJECT_ROOT}"
 
 # ---------- args ----------
 ROLE="${1:-}"; shift || true
-PSK_ARG=""; WEB_URL_ARG=""; PORT="13000"; HOST="0.0.0.0"
+PSK_ARG=""; WEB_URL_ARG=""; PORT="13000"; HOST="0.0.0.0"; BASE_PATH="/info/docker"
 DO_CRON=1; DO_START=1
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --psk)      PSK_ARG="$2"; shift 2 ;;
-    --web-url)  WEB_URL_ARG="$2"; shift 2 ;;
-    --port)     PORT="$2"; shift 2 ;;
-    --host)     HOST="$2"; shift 2 ;;
-    --no-cron)  DO_CRON=0; shift ;;
-    --no-start) DO_START=0; shift ;;
+    --psk)        PSK_ARG="$2"; shift 2 ;;
+    --web-url)    WEB_URL_ARG="$2"; shift 2 ;;
+    --port)       PORT="$2"; shift 2 ;;
+    --host)       HOST="$2"; shift 2 ;;
+    --base-path)  BASE_PATH="$2"; shift 2 ;;
+    --no-cron)    DO_CRON=0; shift ;;
+    --no-start)   DO_START=0; shift ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
 done
+BASE_PATH="/${BASE_PATH#/}"; BASE_PATH="${BASE_PATH%/}"  # normalize: leading slash, no trailing
+[[ "$BASE_PATH" == "/" ]] && BASE_PATH=""
 
 if [[ "$ROLE" != "primary" && "$ROLE" != "secondary" ]]; then
   echo "사용법: $0 <primary|secondary> [--psk KEY] [--web-url URL] [--port N] ..." >&2
@@ -111,7 +114,8 @@ if [[ "$ROLE" == "primary" ]]; then
   set_env_var DOCKERPORTINFO_HOST "$HOST" .env
   set_env_var DOCKERPORTINFO_PORT "$PORT" .env
 fi
-log ".env 구성 완료 (PSK=${PSK:0:6}…)"
+set_env_var DOCKERPORTINFO_BASE_PATH "$BASE_PATH" .env
+log ".env 구성 완료 (PSK=${PSK:0:6}…, base=${BASE_PATH:-/})"
 
 # ---------- dirs / perms ----------
 mkdir -p logs data
@@ -154,12 +158,13 @@ fi
 if [[ "$ROLE" == "primary" && $DO_START -eq 1 ]]; then
   log "웹 서버 기동 시도"
   ./scripts/launch_server.sh
+  HEALTH="http://127.0.0.1:${PORT}${BASE_PATH}/healthz"
   for _ in $(seq 1 20); do
-    curl -s "http://127.0.0.1:${PORT}/healthz" >/dev/null 2>&1 && break
+    curl -s "$HEALTH" >/dev/null 2>&1 && break
     sleep 0.5
   done
-  if curl -s "http://127.0.0.1:${PORT}/healthz" >/dev/null 2>&1; then
-    log "웹 서버 정상 (http://${HOST}:${PORT})"
+  if curl -s "$HEALTH" >/dev/null 2>&1; then
+    log "웹 서버 정상 (http://${HOST}:${PORT}${BASE_PATH}/)"
     ./scripts/send_docker_ps.sh primary || warn "초기 전송 실패 (docker ps 가능 여부 확인)"
   else
     warn "웹 서버 헬스체크 실패. logs/server.log 를 확인하세요."
@@ -169,7 +174,7 @@ fi
 log "완료 ✅  (${ROLE})"
 if [[ "$ROLE" == "primary" ]]; then
   echo
-  echo "  웹 UI : http://<이 서버 IP>:${PORT}"
+  echo "  웹 UI : http://<이 서버 IP>:${PORT}${BASE_PATH}/  (nginx 뒤라면 https://<도메인>${BASE_PATH}/)"
   echo "  PSK   : ${PSK}"
   echo "  ↑ 위 PSK 를 secondary 세팅에 사용하세요:"
   echo "     ./scripts/setup.sh secondary --psk ${PSK} --web-url http://<이 서버 IP>:${PORT}"

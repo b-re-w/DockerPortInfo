@@ -38,21 +38,34 @@ DockerPortInfo/
 
 ```
 [primary]   docker ps ─┐
-                       ├─(POST /docker/<서버명>/)─▶ [primary FastAPI] ─▶ store ─▶ 웹 페이지(폴링)
-[secondary] docker ps ─┘
+                       ├─(POST BASE/<서버명>)─▶ [primary FastAPI:13000] ─▶ store ─▶ 웹 페이지(폴링)
+[secondary] docker ps ─┘     (nginx https → 127.0.0.1:13000)
 ```
 
 ---
 
 ## API
 
+모든 경로는 공통 prefix `DOCKERPORTINFO_BASE_PATH`(기본 `/info/docker`) 아래에 있습니다.
+아래 `BASE`는 그 prefix를 의미합니다 (nginx `location` 과 동일하게 맞출 것).
+
 | 메서드 | 경로 | 설명 |
 | --- | --- | --- |
-| `GET`  | `/` | 모니터링 웹 페이지 |
-| `POST` | `/docker/{server_name}/` | `docker ps` 원본 텍스트(text/plain) 수신·파싱·저장 — **`X-API-Key` 인증 필요** |
-| `GET`  | `/docker/{server_name}/` | 해당 서버의 정리된 스냅샷(JSON) |
-| `GET`  | `/api/snapshots` | 모든 서버 스냅샷(JSON) — 프론트엔드 폴링 대상 |
-| `GET`  | `/healthz` | 헬스 체크 |
+| `GET`  | `BASE/` | 모니터링 웹 페이지 |
+| `GET`  | `BASE/static/*` | 정적 자산(css/js) |
+| `GET`  | `BASE/snapshots` | 모든 서버 스냅샷(JSON) — 프론트엔드 폴링 대상 |
+| `GET`  | `BASE/{server_name}` | 해당 서버의 정리된 스냅샷(JSON) |
+| `POST` | `BASE/{server_name}` | `docker ps` 원본 텍스트(text/plain) 수신·파싱·저장 — **`X-API-Key` 인증 필요** |
+| `GET`  | `BASE/healthz` | 헬스 체크 |
+
+> `{server_name}` 은 `snapshots`/`static`/`healthz` 와 같은 레벨이라, 이 이름들은 서버명으로 쓸 수 없습니다(primary/secondary 사용).
+> prefix를 빈 값으로 두면 루트(`/`)에서 서비스됩니다.
+
+### nginx (기존 HTTPS 서버에 붙이기)
+
+기존 `dolab-gpu.duckdns.org` 의 443 블록에 [deploy/nginx.conf.example](deploy/nginx.conf.example) 의
+`location /info/docker/` 블록을 추가하면 `https://dolab-gpu.duckdns.org/info/docker/` 로 노출됩니다.
+`proxy_pass http://127.0.0.1:13000;` 에 **trailing slash/경로를 붙이지 않아** 원본 URI가 그대로 전달되는 것이 핵심입니다.
 
 ---
 
@@ -66,8 +79,9 @@ chmod +x scripts/setup.sh
 # primary (웹 서버 + 자기 전송). PSK 미지정 시 자동 생성되어 출력됩니다.
 ./scripts/setup.sh primary
 
-# secondary (전송만). primary 가 출력한 PSK 와 IP 를 그대로 사용
-./scripts/setup.sh secondary --psk <primary-PSK> --web-url http://<primary-ip>:13000
+# secondary (전송만). primary 가 출력한 PSK 사용. nginx https 경유 권장
+./scripts/setup.sh secondary --psk <primary-PSK> --web-url https://dolab-gpu.duckdns.org
+#   (내부 IP 직결 시: --web-url http://<primary-ip>:13000)
 ```
 
 `setup.sh`가 하는 일:
@@ -115,7 +129,7 @@ uv sync
 
 # 수동 실행 (개발/확인용)
 ./scripts/launch_server.sh
-# → http://<primary-ip>:13000 접속
+# → http://<primary-ip>:13000/info/docker/ 접속 (nginx 뒤: https://dolab-gpu.duckdns.org/info/docker/)
 ```
 
 `launch_server.sh`는 이미 떠 있으면 아무 것도 하지 않고, 죽어 있으면 다시 띄웁니다.
@@ -153,16 +167,20 @@ chmod +x scripts/send_docker_ps.sh scripts/launch_server.sh
 **같은 `DOCKERPORTINFO_PSK`** 와 primary를 가리키는 `DOCKERPORTINFO_WEB_URL`을 설정합니다.
 
 ```bash
-# secondary 의 .env 예시
+# secondary 의 .env 예시 — nginx https 경유 (권장: 포트 13000 노출 불필요)
 DOCKERPORTINFO_PSK=<primary와 동일한 키>
-DOCKERPORTINFO_WEB_URL=http://<primary-ip>:13000
+DOCKERPORTINFO_WEB_URL=https://dolab-gpu.duckdns.org
+# (BASE_PATH 는 기본 /info/docker → 최종 전송 대상: …/info/docker/secondary)
+
+# 또는 내부 IP 직결 시: DOCKERPORTINFO_WEB_URL=http://<primary-ip>:13000
 ```
 
 ```cron
 * * * * * /opt/DockerPortInfo/scripts/send_docker_ps.sh secondary >> /tmp/dpi-sender.log 2>&1
 ```
 
-> secondary에서 전송이 되려면 primary의 방화벽에서 해당 포트(기본 13000)가 secondary로 열려 있어야 합니다.
+> https 도메인으로 보내면 nginx가 13000으로 프록시하므로 방화벽에 13000을 열 필요가 없습니다.
+> 내부 IP 직결을 쓸 때만 primary의 13000 포트를 secondary에 개방하세요.
 
 ---
 
@@ -170,17 +188,20 @@ DOCKERPORTINFO_WEB_URL=http://<primary-ip>:13000
 
 ```bash
 # 헬스 체크
-curl http://127.0.0.1:13000/healthz
+curl http://127.0.0.1:13000/info/docker/healthz
 
-# 전송 한 번 수동 실행 (.env 의 PSK·WEB_URL 사용, 서버 이름은 인자로)
+# 전송 한 번 수동 실행 (.env 의 PSK·WEB_URL·BASE_PATH 사용, 서버 이름은 인자로)
 ./scripts/send_docker_ps.sh primary
 
 # 키 없이 POST 하면 401 인지 확인
-curl -s -o /dev/null -w "%{http_code}\n" -X POST http://127.0.0.1:13000/docker/primary/ --data "x"
+curl -s -o /dev/null -w "%{http_code}\n" -X POST http://127.0.0.1:13000/info/docker/primary --data "x"
 
 # 저장된 스냅샷 조회
-curl http://127.0.0.1:13000/docker/primary/
-curl http://127.0.0.1:13000/api/snapshots
+curl http://127.0.0.1:13000/info/docker/primary
+curl http://127.0.0.1:13000/info/docker/snapshots
+
+# nginx 경유 (https)
+curl https://dolab-gpu.duckdns.org/info/docker/snapshots
 ```
 
 자세한 설계 배경은 [PROJECT.md](PROJECT.md) 참고.

@@ -7,7 +7,11 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" as="style" crossorigin
         href="https://cdn.jsdelivr.net/gh/sun-typeface/SUITE@2/fonts/variable/woff2/SUITEVariable.css" />
-  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="__BASE__/static/style.css" />
+  <script>
+    // Common URL prefix injected by the server (matches the nginx location).
+    window.DPI_BASE = "__BASE__";
+  </script>
   <script>
     // Apply theme before paint to avoid a flash (auto = dark 19:00-07:00)
     (function () {
@@ -55,6 +59,6 @@
     <div class="placeholder">데이터를 불러오는 중입니다…</div>
   </main>
 
-  <script src="/static/app.js"></script>
+  <script src="__BASE__/static/app.js"></script>
 </body>
 </html>
